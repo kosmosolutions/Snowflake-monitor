@@ -392,11 +392,6 @@ with tab_compute:
                     comp_df,
                     use_container_width=True,
                     hide_index=True,
-                    column_config={
-                        "pct_change": st.column_config.NumberColumn(
-                            "% Change", format="%.1f%%"
-                        )
-                    },
                 )
 
 # -----------------------------------------------------------------------------
@@ -649,12 +644,4 @@ with tab_audit:
                 filtered,
                 use_container_width=True,
                 hide_index=True,
-                column_config={
-                    "total_elapsed_time": st.column_config.NumberColumn(
-                        "Elapsed (ms)", format="%d"
-                    ),
-                    "query_preview": st.column_config.TextColumn(
-                        "Query Preview", width="large"
-                    ),
-                },
             )
