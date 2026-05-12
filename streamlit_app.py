@@ -17,7 +17,7 @@ import streamlit as st
 
 st.set_page_config(
     page_title="Snowflake Monitor",
-    page_icon=":material/monitoring:",
+    page_icon="📊",
     layout="wide",
 )
 
@@ -216,7 +216,7 @@ def load_query_audit(days: int) -> pd.DataFrame:
 # =============================================================================
 
 with st.sidebar:
-    st.header(":material/settings: Filters")
+    st.header("⚙️ Filters")
     lookback_label = st.selectbox("Lookback period", list(LOOKBACK_OPTIONS.keys()), index=2)
     lookback_days = LOOKBACK_OPTIONS[lookback_label]
     st.divider()
@@ -230,11 +230,11 @@ with st.sidebar:
 
 tab_overview, tab_compute, tab_ai, tab_storage, tab_audit = st.tabs(
     [
-        ":material/analytics: Overview",
-        ":material/bolt: Compute",
-        ":material/smart_toy: AI & Services",
-        ":material/database: Storage",
-        ":material/policy: Query Audit",
+        "📈 Overview",
+        "⚡ Compute",
+        "🤖 AI & Services",
+        "💾 Storage",
+        "🔍 Query Audit",
     ]
 )
 
@@ -256,15 +256,15 @@ with tab_overview:
             .idxmax()
         )
 
-        with st.container(horizontal=True):
-            st.metric("Total Credits Used", f"{total_credits:,.2f}", border=True)
-            st.metric("Total Credits Billed", f"{total_billed:,.2f}", border=True)
-            st.metric("Top Service", top_service, border=True)
+        kpi1, kpi2, kpi3 = st.columns(3)
+        kpi1.metric("Total Credits Used", f"{total_credits:,.2f}")
+        kpi2.metric("Total Credits Billed", f"{total_billed:,.2f}")
+        kpi3.metric("Top Service", top_service)
 
         col1, col2 = st.columns(2)
 
         with col1:
-            with st.container(border=True):
+            with st.container():
                 st.subheader("Credits by Service Type")
                 service_agg = (
                     daily_df.groupby("service_type", as_index=False)["credits_used"]
@@ -284,7 +284,7 @@ with tab_overview:
                 st.altair_chart(chart, use_container_width=True)
 
         with col2:
-            with st.container(border=True):
+            with st.container():
                 st.subheader("Daily Credit Trend")
                 trend = (
                     daily_df.groupby("usage_date", as_index=False)["credits_used"]
@@ -301,7 +301,7 @@ with tab_overview:
                 )
                 st.altair_chart(chart, use_container_width=True)
 
-        with st.container(border=True):
+        with st.container():
             st.subheader("Daily Breakdown by Service")
             st.dataframe(
                 daily_df.pivot_table(
@@ -332,29 +332,26 @@ with tab_compute:
             .sort_values("credits_used", ascending=False)
         )
 
-        with st.container(horizontal=True):
-            st.metric(
-                "Total Warehouse Credits",
-                f"{wh_totals['credits_used'].sum():,.2f}",
-                border=True,
+        kpi1, kpi2, kpi3 = st.columns(3)
+        kpi1.metric(
+            "Total Warehouse Credits",
+            f"{wh_totals['credits_used'].sum():,.2f}",
+        )
+        kpi2.metric(
+            "Active Warehouses",
+            str(wh_totals.shape[0]),
+        )
+        if not wh_totals.empty:
+            kpi3.metric(
+                "Top Warehouse",
+                wh_totals.iloc[0]["warehouse_name"],
+                f"{wh_totals.iloc[0]['credits_used']:,.2f} credits",
             )
-            st.metric(
-                "Active Warehouses",
-                str(wh_totals.shape[0]),
-                border=True,
-            )
-            if not wh_totals.empty:
-                st.metric(
-                    "Top Warehouse",
-                    wh_totals.iloc[0]["warehouse_name"],
-                    f"{wh_totals.iloc[0]['credits_used']:,.2f} credits",
-                    border=True,
-                )
 
         col1, col2 = st.columns(2)
 
         with col1:
-            with st.container(border=True):
+            with st.container():
                 st.subheader("Top Warehouses by Credits")
                 chart = (
                     alt.Chart(wh_totals.head(10))
@@ -369,7 +366,7 @@ with tab_compute:
                 st.altair_chart(chart, use_container_width=True)
 
         with col2:
-            with st.container(border=True):
+            with st.container():
                 st.subheader("Daily Warehouse Trend")
                 daily_wh = (
                     wh_df.groupby("usage_date", as_index=False)["credits_used"].sum()
@@ -385,7 +382,7 @@ with tab_compute:
                 )
                 st.altair_chart(chart, use_container_width=True)
 
-        with st.container(border=True):
+        with st.container():
             st.subheader("Warehouse Comparison: Recent 14d vs Prior 14d")
             comp_df = load_warehouse_comparison()
             if comp_df.empty:
@@ -415,16 +412,16 @@ with tab_ai:
         ai_df = daily_df_ai[daily_df_ai["service_type"] == "AI_SERVICES"]
         clustering_df = daily_df_ai[daily_df_ai["service_type"] == "AUTO_CLUSTERING"]
 
-        with st.container(horizontal=True):
-            ai_total = ai_df["credits_used"].sum() if not ai_df.empty else 0
-            cluster_total = clustering_df["credits_used"].sum() if not clustering_df.empty else 0
-            st.metric("AI Services Credits", f"{ai_total:,.4f}", border=True)
-            st.metric("Auto-Clustering Credits", f"{cluster_total:,.4f}", border=True)
+        kpi1, kpi2 = st.columns(2)
+        ai_total = ai_df["credits_used"].sum() if not ai_df.empty else 0
+        cluster_total = clustering_df["credits_used"].sum() if not clustering_df.empty else 0
+        kpi1.metric("AI Services Credits", f"{ai_total:,.4f}")
+        kpi2.metric("Auto-Clustering Credits", f"{cluster_total:,.4f}")
 
         col1, col2 = st.columns(2)
 
         with col1:
-            with st.container(border=True):
+            with st.container():
                 st.subheader("AI Services Daily Trend")
                 if ai_df.empty:
                     st.info("No AI service usage in this period.")
@@ -441,7 +438,7 @@ with tab_ai:
                     st.altair_chart(chart, use_container_width=True)
 
         with col2:
-            with st.container(border=True):
+            with st.container():
                 st.subheader("Auto-Clustering Daily Trend")
                 if clustering_df.empty:
                     st.info("No auto-clustering usage in this period.")
@@ -457,7 +454,7 @@ with tab_ai:
                     )
                     st.altair_chart(chart, use_container_width=True)
 
-        with st.container(border=True):
+        with st.container():
             st.subheader("Serverless Tasks")
             tasks_df = load_serverless_tasks(lookback_days)
             if tasks_df.empty:
@@ -481,15 +478,15 @@ with tab_storage:
         total_storage = latest["total_gb"].sum()
         total_failsafe = latest["failsafe_gb"].sum()
 
-        with st.container(horizontal=True):
-            st.metric("Total Storage", f"{total_storage:,.2f} GB", border=True)
-            st.metric("Failsafe Storage", f"{total_failsafe:,.2f} GB", border=True)
-            st.metric("Databases", str(latest.shape[0]), border=True)
+        kpi1, kpi2, kpi3 = st.columns(3)
+        kpi1.metric("Total Storage", f"{total_storage:,.2f} GB")
+        kpi2.metric("Failsafe Storage", f"{total_failsafe:,.2f} GB")
+        kpi3.metric("Databases", str(latest.shape[0]))
 
         col1, col2 = st.columns(2)
 
         with col1:
-            with st.container(border=True):
+            with st.container():
                 st.subheader("Top Databases by Storage")
                 top_dbs = latest.sort_values("total_gb", ascending=False).head(10)
                 chart = (
@@ -505,7 +502,7 @@ with tab_storage:
                 st.altair_chart(chart, use_container_width=True)
 
         with col2:
-            with st.container(border=True):
+            with st.container():
                 st.subheader("Storage Composition (Latest)")
                 composition = pd.DataFrame(
                     {
@@ -527,7 +524,7 @@ with tab_storage:
                 )
                 st.altair_chart(chart, use_container_width=True)
 
-        with st.container(border=True):
+        with st.container():
             st.subheader("Storage Trend (Top 10 Databases, Last 30 Days)")
             top_db_names = (
                 latest.sort_values("total_gb", ascending=False)
@@ -563,15 +560,15 @@ with tab_audit:
         unique_users = audit_df["user_name"].nunique()
         failed = (audit_df["execution_status"] != "SUCCESS").sum()
 
-        with st.container(horizontal=True):
-            st.metric("DDL/DML Queries", str(total_queries), border=True)
-            st.metric("Unique Users", str(unique_users), border=True)
-            st.metric("Failed Queries", str(failed), border=True)
+        kpi1, kpi2, kpi3 = st.columns(3)
+        kpi1.metric("DDL/DML Queries", str(total_queries))
+        kpi2.metric("Unique Users", str(unique_users))
+        kpi3.metric("Failed Queries", str(failed))
 
         col1, col2 = st.columns(2)
 
         with col1:
-            with st.container(border=True):
+            with st.container():
                 st.subheader("Queries by Type")
                 type_counts = (
                     audit_df["query_type"]
@@ -595,7 +592,7 @@ with tab_audit:
                 st.altair_chart(chart, use_container_width=True)
 
         with col2:
-            with st.container(border=True):
+            with st.container():
                 st.subheader("Top Users (DDL/DML)")
                 user_counts = (
                     audit_df["user_name"]
@@ -616,7 +613,7 @@ with tab_audit:
                 )
                 st.altair_chart(chart, use_container_width=True)
 
-        with st.container(border=True):
+        with st.container():
             st.subheader("Recent DDL/DML Queries")
 
             # Filters
