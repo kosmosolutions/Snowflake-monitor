@@ -391,7 +391,7 @@ with tab_compute:
                 st.dataframe(
                     comp_df,
                     use_container_width=True,
-                    hide_index=True,
+                    
                 )
 
 # -----------------------------------------------------------------------------
@@ -643,5 +643,5 @@ with tab_audit:
             st.dataframe(
                 filtered,
                 use_container_width=True,
-                hide_index=True,
+                
             )
