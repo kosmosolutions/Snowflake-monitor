@@ -1,0 +1,14 @@
+definition_version: 2
+entities:
+  snowflake_monitor:
+    type: streamlit
+    identifier:
+      name: SNOWFLAKE_MONITOR
+      database: CLAUDE_DB
+      schema: WORKSPACE
+    query_warehouse: CLAUDE_WH
+    runtime_name: SYSTEM$ST_CONTAINER_RUNTIME_PY3_11
+    main_file: streamlit_app.py
+    artifacts:
+      - streamlit_app.py
+      - pyproject.toml
