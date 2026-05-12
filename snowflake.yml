@@ -6,7 +6,7 @@ entities:
       name: SNOWFLAKE_MONITOR
       database: CLAUDE_DB
       schema: WORKSPACE
-    query_warehouse: CLAUDE_WH
+    query_warehouse: CORTEX_WH
     runtime_name: SYSTEM$ST_CONTAINER_RUNTIME_PY3_11
     main_file: streamlit_app.py
     artifacts:
