@@ -569,11 +569,8 @@ with tab_audit:
                     audit_df["query_type"]
                     .value_counts()
                     .reset_index()
-                    .rename(columns={"index": "query_type", "query_type": "count"})
                 )
-                # Handle pandas version differences in value_counts output
-                if "count" not in type_counts.columns:
-                    type_counts.columns = ["query_type", "count"]
+                type_counts.columns = ["query_type", "count"]
                 chart = (
                     alt.Chart(type_counts)
                     .mark_bar()
