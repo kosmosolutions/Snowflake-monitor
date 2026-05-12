@@ -27,17 +27,45 @@ st.set_page_config(
 # =============================================================================
 
 
-def get_connection():
-    """Return Snowflake connection, stop app on failure."""
+def _is_running_in_snowflake() -> bool:
+    """Detect if app is running inside Snowflake (SiS)."""
     try:
-        return st.connection("snowflake")
-    except Exception as e:
-        st.error(f"Failed to connect to Snowflake: {e}")
-        st.info(
-            "Configure your connection in `.streamlit/secrets.toml` "
-            "or deploy to Snowflake for embedded identity."
-        )
-        st.stop()
+        from snowflake.snowpark.context import get_active_session
+        get_active_session()
+        return True
+    except Exception:
+        return False
+
+
+def get_session():
+    """Return a Snowpark session. Works both locally and in Snowflake."""
+    if _is_running_in_snowflake():
+        from snowflake.snowpark.context import get_active_session
+        return get_active_session()
+    else:
+        try:
+            return st.connection("snowflake").session()
+        except Exception as e:
+            st.error(f"Failed to connect to Snowflake: {e}")
+            st.info(
+                "Configure your connection in `.streamlit/secrets.toml`."
+            )
+            st.stop()
+
+
+def run_query(sql: str, params: list | None = None) -> pd.DataFrame:
+    """Execute SQL and return a pandas DataFrame."""
+    session = get_session()
+    if params:
+        # Replace positional :1, :2 etc. with actual values for Snowpark
+        query = sql
+        for i, val in enumerate(params, 1):
+            query = query.replace(f":{i}", str(val))
+        df = session.sql(query).to_pandas()
+    else:
+        df = session.sql(sql).to_pandas()
+    df.columns = df.columns.str.lower()
+    return df
 
 
 # =============================================================================
@@ -49,8 +77,7 @@ LOOKBACK_OPTIONS = {"7 days": 7, "14 days": 14, "30 days": 30, "90 days": 90}
 
 @st.cache_data(ttl=600, show_spinner="Loading overview data...")
 def load_daily_credits(days: int) -> pd.DataFrame:
-    conn = get_connection()
-    df = conn.query(
+    return run_query(
         """
         SELECT
             SERVICE_TYPE,
@@ -63,14 +90,11 @@ def load_daily_credits(days: int) -> pd.DataFrame:
         """,
         params=[days],
     )
-    df.columns = df.columns.str.lower()
-    return df
 
 
 @st.cache_data(ttl=600, show_spinner="Loading warehouse data...")
 def load_warehouse_credits(days: int) -> pd.DataFrame:
-    conn = get_connection()
-    df = conn.query(
+    return run_query(
         """
         SELECT
             WAREHOUSE_NAME,
@@ -83,14 +107,11 @@ def load_warehouse_credits(days: int) -> pd.DataFrame:
         """,
         params=[days],
     )
-    df.columns = df.columns.str.lower()
-    return df
 
 
 @st.cache_data(ttl=600, show_spinner="Loading warehouse comparison...")
 def load_warehouse_comparison() -> pd.DataFrame:
-    conn = get_connection()
-    df = conn.query(
+    return run_query(
         """
         WITH recent AS (
             SELECT warehouse_name, SUM(credits_used) AS credits
@@ -120,14 +141,11 @@ def load_warehouse_comparison() -> pd.DataFrame:
         LIMIT 15
         """
     )
-    df.columns = df.columns.str.lower()
-    return df
 
 
 @st.cache_data(ttl=600, show_spinner="Loading serverless task data...")
 def load_serverless_tasks(days: int) -> pd.DataFrame:
-    conn = get_connection()
-    df = conn.query(
+    return run_query(
         """
         SELECT
             TASK_NAME,
@@ -142,14 +160,11 @@ def load_serverless_tasks(days: int) -> pd.DataFrame:
         """,
         params=[days],
     )
-    df.columns = df.columns.str.lower()
-    return df
 
 
 @st.cache_data(ttl=600, show_spinner="Loading storage data...")
 def load_storage() -> pd.DataFrame:
-    conn = get_connection()
-    df = conn.query(
+    return run_query(
         """
         SELECT
             DATABASE_NAME,
@@ -164,14 +179,11 @@ def load_storage() -> pd.DataFrame:
         ORDER BY USAGE_DATE DESC
         """
     )
-    df.columns = df.columns.str.lower()
-    return df
 
 
 @st.cache_data(ttl=600, show_spinner="Loading query audit data...")
 def load_query_audit(days: int) -> pd.DataFrame:
-    conn = get_connection()
-    df = conn.query(
+    return run_query(
         """
         SELECT
             QUERY_TYPE,
@@ -197,8 +209,6 @@ def load_query_audit(days: int) -> pd.DataFrame:
         """,
         params=[days],
     )
-    df.columns = df.columns.str.lower()
-    return df
 
 
 # =============================================================================
